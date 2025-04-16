@@ -5,7 +5,7 @@ function Home() {
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center bg-gray-50 animate-fadeInSlide">
       <h1 className="text-5xl font-bold text-gray-800 mb-6 text-center">
-        Nonso Nkire's Fabulous Movie Searching Website
+        Nonso Nkires' Fabulous Movie Searching Website
       </h1>
       <p className="text-xl text-gray-600 mb-8 text-center">
         I hope you find the movie you're after!

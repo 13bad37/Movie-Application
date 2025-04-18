@@ -18,10 +18,13 @@
 ---
 
 ## 🎨 Screenshots
-
-![Home Screen](./docs/images/home.png)  
-![Movies Grid](./docs/images/movies.png)  
+### Home Screen
+![Home Screen](./docs/images/home.png)
+### Movies Grid  
+![Movies Grid](./docs/images/movies.png) 
+### Movie Details 
 ![Movie Details](./docs/images/details.png)
+### Actor Details
 ![Personal Details](./docs/images/person.png)
 
 ---

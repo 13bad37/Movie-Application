@@ -1,4 +1,3 @@
-// src/pages/MovieDetails.js
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -26,6 +25,7 @@ const countryMap = {
   'japan': 'JP',
   'france': 'FR',
   'germany': 'DE',
+  'west germany': 'DE',
   // Add more if needed
 };
 
@@ -88,17 +88,16 @@ function MovieDetails() {
       .sort((a, b) => a.localeCompare(b))
       .slice(0, 2);
   };
-
   const countries = parseCountries(movie.country);
 
   // Ratings
-  const imdbObj = movie.ratings.find((r) => r.source === 'Internet Movie Database');
-  const rtObj   = movie.ratings.find((r) => r.source === 'Rotten Tomatoes');
-  const metaObj = movie.ratings.find((r) => r.source === 'Metacritic');
+  const imdbObj  = movie.ratings.find((r) => r.source === 'Internet Movie Database');
+  const rtObj    = movie.ratings.find((r) => r.source === 'Rotten Tomatoes');
+  const metaObj  = movie.ratings.find((r) => r.source === 'Metacritic');
 
-  const imdbRating = imdbObj ? imdbObj.value : 'N/A';
-  const rtRating   = rtObj ? rtObj.value : 'N/A';
-  const metaRating = metaObj ? metaObj.value : 'N/A';
+  const imdbRating = imdbObj && imdbObj.value ? imdbObj.value : 'N/A';
+  const rtRating   = rtObj   && rtObj.value   ? rtObj.value   : 'N/A';
+  const metaRating = metaObj && metaObj.value ? metaObj.value : 'N/A';
 
   // Helper to capitalize category in Cast & Crew
   const capitalize = (str) => {
@@ -122,6 +121,7 @@ function MovieDetails() {
         <div className="md:w-2/3 p-8">
           {/* Title */}
           <h1 className="text-4xl font-bold text-gray-900 mb-2">{movie.title}</h1>
+
           {/* Genre Tags */}
           <div className="flex flex-wrap gap-2 mb-4">
             {movie.genres.map((genre) => (
@@ -134,7 +134,7 @@ function MovieDetails() {
             ))}
           </div>
 
-          {/* Info Row (runtime, year, up to 2 countries) */}
+          {/* Info Row (runtime, year, countries) */}
           <div className="flex flex-wrap gap-8 items-center text-lg font-medium mb-6">
             {/* Runtime */}
             <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ function MovieDetails() {
             </div>
             {/* Release Year */}
             <div>{movie.year}</div>
-            {/* Countries (with ReactCountryFlag) */}
+            {/* Countries */}
             <div className="flex items-center gap-2">
               {countries.map((cName, idx) => {
                 const isoCode = countryMap[cName.toLowerCase()];
@@ -164,7 +164,7 @@ function MovieDetails() {
             </div>
           </div>
 
-          {/* Ratings (No Box Office) */}
+          {/* Ratings */}
           <div className="flex items-center gap-6 mb-6">
             {/* IMDb */}
             <div className="flex items-center gap-1 group">

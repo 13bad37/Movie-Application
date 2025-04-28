@@ -1,42 +1,44 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
+import { logoutApi, setAuthToken } from '../services/api'
 
 export default function Navbar() {
   const user      = useAuthStore(s => s.user)
   const clearAuth = useAuthStore(s => s.clearAuth)
   const navigate  = useNavigate()
 
-  const handleLogout = () => {
-    clearAuth()
-    navigate('/login', { replace: true })
+  const handleLogout = async () => {
+    try {
+      await logoutApi()
+    } catch (err) {
+      console.error('Logout failed:', err)
+    } finally {
+      clearAuth()
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      setAuthToken(null)
+      toast.success('Logged out')
+      navigate('/login', { replace: true })
+    }
   }
 
   return (
     <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-sm">
-      {/* Left: logo + Movies */}
       <div className="flex items-center space-x-6">
-        <Link
-          to="/"
-          className="text-2xl font-bold text-indigo-600 hover:text-indigo-700 transition"
-        >
+        <Link to="/" className="text-2xl font-bold text-indigo-600 hover:text-indigo-700">
           Movie Explorer
         </Link>
-        <Link
-          to="/movies"
-          className="text-gray-700 hover:text-indigo-600 transition font-medium"
-        >
+        <Link to="/movies" className="text-gray-700 hover:text-indigo-600 font-medium">
           Movies
         </Link>
       </div>
 
-      {/* Right: auth links */}
       <div className="flex items-center space-x-6">
         {user ? (
           <>
-            <span className="text-gray-700 font-medium">
-              {user}
-            </span>
+            <span className="text-gray-700 font-medium">{user}</span>
             <button
               onClick={handleLogout}
               className="px-4 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
@@ -46,10 +48,7 @@ export default function Navbar() {
           </>
         ) : (
           <>
-            <Link
-              to="/login"
-              className="text-gray-700 hover:text-indigo-600 transition"
-            >
+            <Link to="/login" className="text-gray-700 hover:text-indigo-600">
               Login
             </Link>
             <Link
@@ -62,5 +61,5 @@ export default function Navbar() {
         )}
       </div>
     </nav>
-  )
+)
 }

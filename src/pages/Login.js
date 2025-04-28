@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
-import { login } from '../services/api'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
+import { login, setAuthToken } from '../services/api'
 
 export default function Login() {
   const [email, setEmail]       = useState('')
@@ -15,8 +15,8 @@ export default function Login() {
   const location = useLocation()
   const from     = location.state?.from?.pathname || '/movies'
 
-  // pull in setAuth from your Zustand store
-  const setAuth = useAuthStore(s => s.setAuth)
+  // Zustand setter
+  const setAuth = useAuthStore((s) => s.setAuth)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -29,11 +29,14 @@ export default function Login() {
       localStorage.setItem('token', data.token)
       localStorage.setItem('refreshToken', data.refreshToken)
 
-      // 2) Tells store user is logged in
+      // 2) Auto-attach bearer token for future requests
+      setAuthToken(data.token)
+
+      // 3) Update global auth state
       setAuth(email)
 
       toast.success('Logged in successfully')
-      // 3) Redirect back
+      // 4) Redirect back where they came from
       navigate(from, { replace: true })
     } catch (err) {
       console.error(err)
@@ -78,7 +81,7 @@ export default function Login() {
               id="email"
               autoComplete="username"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm
                          focus:border-indigo-500 focus:ring-indigo-500 transition"
@@ -94,7 +97,7 @@ export default function Login() {
               id="password"
               autoComplete="current-password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm
                          focus:border-indigo-500 focus:ring-indigo-500 transition"
@@ -115,7 +118,10 @@ export default function Login() {
 
         <p className="mt-6 text-center text-sm text-gray-600">
           Don’t have an account?{' '}
-          <Link to="/register" className="text-indigo-600 hover:text-indigo-500 transition-colors">
+          <Link
+            to="/register"
+            className="text-indigo-600 hover:text-indigo-500 transition-colors"
+          >
             Register here
           </Link>
         </p>

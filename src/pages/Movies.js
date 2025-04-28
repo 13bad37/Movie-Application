@@ -57,7 +57,6 @@ export default function Movies() {
         }
       } catch (err) {
         console.error('Search error:', err)
-        // toast.error('Failed to fetch movies')  <-- removed per request
         setMovies([])
         setTotalPages(1)
       } finally {
@@ -96,7 +95,7 @@ export default function Movies() {
     setGotoPage('')
   }
 
-  // Back to top button visibility
+  // Back to top button
   useEffect(() => {
     const onScroll = () => {
       setShowTopBtn(

@@ -7,6 +7,7 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  DollarSign,
 } from 'lucide-react';
 import ReactCountryFlag from 'react-country-flag';
 import { getMovieDetails } from '../services/api';
@@ -26,7 +27,10 @@ const countryMap = {
   'france': 'FR',
   'germany': 'DE',
   'west germany': 'DE',
-  // Add more if needed
+  'hong kong' : 'HK',
+  'ireland' : 'IE',
+  'italy' : 'IT'
+  // Add more later maybe
 };
 
 function MovieDetails() {
@@ -90,6 +94,12 @@ function MovieDetails() {
   };
   const countries = parseCountries(movie.country);
 
+  // Format box office
+  const boxOfficeRaw = movie.boxoffice;
+  const boxOffice = boxOfficeRaw
+    ? `$${boxOfficeRaw.toLocaleString()}`
+    : 'N/A';
+
   // Ratings
   const imdbObj  = movie.ratings.find((r) => r.source === 'Internet Movie Database');
   const rtObj    = movie.ratings.find((r) => r.source === 'Rotten Tomatoes');
@@ -134,7 +144,7 @@ function MovieDetails() {
             ))}
           </div>
 
-          {/* Info Row (runtime, year, countries) */}
+          {/* Info Row (runtime, year, countries, box office) */}
           <div className="flex flex-wrap gap-8 items-center text-lg font-medium mb-6">
             {/* Runtime */}
             <div className="flex items-center gap-2">
@@ -162,8 +172,18 @@ function MovieDetails() {
                 );
               })}
             </div>
+            {/* Box Office */}
+            <div 
+              className="flex items-center gap-2 group"
+              title= "Box Office Earnings (USD)"
+            >
+              <DollarSign className="h-5 w-5 text-gray-500 transition group-hover:text-indigo-600" />
+              <span className="transition group-hover:text-indigo-600">
+                {boxOffice}
+              </span>
+            </div>
           </div>
-
+          
           {/* Ratings */}
           <div className="flex items-center gap-6 mb-6">
             {/* IMDb */}

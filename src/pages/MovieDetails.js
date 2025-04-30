@@ -29,7 +29,8 @@ const countryMap = {
   'west germany': 'DE',
   'hong kong' : 'HK',
   'ireland' : 'IE',
-  'italy' : 'IT'
+  'italy' : 'IT',
+  'iran' : 'IR',
   // Add more later maybe
 };
 

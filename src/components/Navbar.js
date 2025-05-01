@@ -1,36 +1,34 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
-import { logoutApi, setAuthToken } from '../services/api'
 
 export default function Navbar() {
   const user      = useAuthStore(s => s.user)
   const clearAuth = useAuthStore(s => s.clearAuth)
   const navigate  = useNavigate()
 
-  const handleLogout = async () => {
-    try {
-      await logoutApi()
-    } catch (err) {
-      console.error('Logout failed:', err)
-    } finally {
-      clearAuth()
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      setAuthToken(null)
-      toast.success('Logged out')
-      navigate('/login', { replace: true })
-    }
+  const handleLogout = () => {
+    clearAuth()
+    localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
+    navigate('/login', { replace: true })
   }
 
+  // We replace the <Link> to /movies with reloadDocument so it truly remounts.
   return (
     <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-sm">
       <div className="flex items-center space-x-6">
-        <Link to="/" className="text-2xl font-bold text-indigo-600 hover:text-indigo-700">
+        <Link
+          to="/"
+          className="text-2xl font-bold text-indigo-600 hover:text-indigo-700 transition"
+        >
           Movie Explorer
         </Link>
-        <Link to="/movies" className="text-gray-700 hover:text-indigo-600 font-medium">
+        <Link
+          to="/movies"
+          reloadDocument
+          className="text-gray-700 hover:text-indigo-600 transition font-medium"
+        >
           Movies
         </Link>
       </div>
@@ -48,7 +46,10 @@ export default function Navbar() {
           </>
         ) : (
           <>
-            <Link to="/login" className="text-gray-700 hover:text-indigo-600">
+            <Link
+              to="/login"
+              className="text-gray-700 hover:text-indigo-600 transition"
+            >
               Login
             </Link>
             <Link
@@ -61,5 +62,5 @@ export default function Navbar() {
         )}
       </div>
     </nav>
-)
+  )
 }

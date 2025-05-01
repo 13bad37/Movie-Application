@@ -1,90 +1,147 @@
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-// base URL for all requests
+// Base URL for all requests
 axios.defaults.baseURL = '/api'
 
-// Attach bearer on every request if present 
-export function setAuthToken(token) {
-  if (token) {
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-  } else {
-    delete axios.defaults.headers.common['Authorization']
+// === Request interceptor: auto-attach stored bearer token ===
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem('token')
+  if (token && !config.headers.Authorization) {
+    config.headers.Authorization = `Bearer ${token}`
   }
+  return config
+})
+
+// === Response interceptor: on 401, try refresh (unless this is an auth call) ===
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    error ? prom.reject(error) : prom.resolve(token)
+  })
+  failedQueue = []
 }
 
-// Response interceptor for 401 (refresh flow)
 axios.interceptors.response.use(
-  (res) => res,
-  async (err) => {
-    const original = err.config
-    const refreshToken = localStorage.getItem('refreshToken')
+  res => res,
+  err => {
+    const { config, response } = err
+    const originalRequest = config
+
+    // if it's a 401 from login/register/refresh → just reject
     if (
-      err.response?.status === 401 &&
-      !original._retry &&
-      refreshToken
+      response?.status === 401 &&
+      /\/user\/(login|register|refresh)/.test(originalRequest.url)
     ) {
-      original._retry = true
-      try {
-        const r = await axios.post('/user/refresh', { refreshToken })
-        const newToken = r.data.bearerToken.token
-
-        // persist & re-attach
-        localStorage.setItem('token', newToken)
-        setAuthToken(newToken)
-
-        // retry original
-        original.headers['Authorization'] = `Bearer ${newToken}`
-        return axios(original)
-      } catch (e) {
-        toast.error('Session expired. Please log in again.')
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
-        setAuthToken(null)
-        window.location.href = '/login'
-        return Promise.reject(e)
-      }
+      return Promise.reject(err)
     }
+
+    // otherwise for other 401s, attempt token refresh once
+    if (
+      response?.status === 401 &&
+      !originalRequest._retry &&
+      localStorage.getItem('refreshToken')
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            return axios(originalRequest)
+          })
+          .catch(e => Promise.reject(e))
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      return new Promise((resolve, reject) => {
+        axios
+          .post('/user/refresh', {
+            token: localStorage.getItem('refreshToken'),
+          })
+          .then(({ data }) => {
+            const newToken = data.bearerToken.token
+            const newRefresh = data.refreshToken.token
+
+            // persist new tokens
+            localStorage.setItem('token', newToken)
+            localStorage.setItem('refreshToken', newRefresh)
+            axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+
+            processQueue(null, newToken)
+            originalRequest.headers.Authorization = `Bearer ${newToken}`
+            resolve(axios(originalRequest))
+          })
+          .catch(refreshErr => {
+            processQueue(refreshErr, null)
+            localStorage.removeItem('token')
+            localStorage.removeItem('refreshToken')
+            toast.error('Session expired, please log in again')
+            window.location.href = '/login'
+            reject(refreshErr)
+          })
+          .finally(() => {
+            isRefreshing = false
+          })
+      })
+    }
+
     return Promise.reject(err)
   }
 )
 
-// Call /user/logout endpoint ———
-export async function logoutApi() {
-  const refreshToken = localStorage.getItem('refreshToken')
-  return (await axios.post('/user/logout', { refreshToken })).data
-}
+// === API methods ===
 
 export const searchMovies = async (title, year, page) => {
   const params = { page }
   if (title) params.title = title
   if (typeof year === 'number' && !isNaN(year)) params.year = year
 
-  const res = await axios.get('/movies/search', { params })
+  const resp = await axios.get('/movies/search', { params })
   return {
-    movies: res.data.data,
-    total:  res.data.pagination.total,
+    movies: resp.data.data,
+    total: resp.data.pagination.total,
   }
 }
 
-export const getMovieDetails = async (imdbID) => {
-  const res = await axios.get(`/movies/data/${imdbID}`)
-  return res.data
+export const getMovieDetails = async imdbID => {
+  const resp = await axios.get(`/movies/data/${imdbID}`)
+  return resp.data
 }
 
-export const getPersonDetails = async (id) => {
-  const res = await axios.get(`/people/${id}`)
-  return res.data
+export const getPersonDetails = async id => {
+  const resp = await axios.get(`/people/${id}`)
+  return resp.data
 }
 
 export const login = async (email, password) => {
-  const res = await axios.post('/user/login', { email, password })
+  const resp = await axios.post('/user/login', { email, password })
   return {
-    token:        res.data.bearerToken.token,
-    refreshToken: res.data.refreshToken.token,
+    token: resp.data.bearerToken.token,
+    refreshToken: resp.data.refreshToken.token,
   }
 }
 
 export const register = async (email, password) => {
-  return (await axios.post('/user/register', { email, password })).data
+  const resp = await axios.post('/user/register', { email, password })
+  return resp.data
+}
+
+export const logout = async () => {
+  return axios.post('/user/logout')
+}
+
+/**
+ * Manually set or clear the default Authorization header
+ */
+export const setAuthToken = token => {
+  if (token) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  } else {
+    delete axios.defaults.headers.common['Authorization']
+  }
 }

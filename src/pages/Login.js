@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
+import { login, setAuthToken } from '../services/api'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
-import { login, setAuthToken } from '../services/api'
 
 export default function Login() {
   const [email, setEmail]       = useState('')
@@ -15,12 +15,13 @@ export default function Login() {
   const location = useLocation()
   const from     = location.state?.from?.pathname || '/movies'
 
-  // Zustand setter
-  const setAuth = useAuthStore((s) => s.setAuth)
+  // pull in setAuth from Zustand store
+  const setAuth = useAuthStore(s => s.setAuth)
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async e => {
+    e.preventDefault()              // ← stop any native reload
     setError('')
+
     try {
       setLoading(true)
       const data = await login(email, password)
@@ -29,17 +30,18 @@ export default function Login() {
       localStorage.setItem('token', data.token)
       localStorage.setItem('refreshToken', data.refreshToken)
 
-      // 2) Auto-attach bearer token for future requests
+      // 1b) Make axios use this token immediately
       setAuthToken(data.token)
 
-      // 3) Update global auth state
+      // 2) Tell global store that user is logged in
       setAuth(email)
 
       toast.success('Logged in successfully')
-      // 4) Redirect back where they came from
+      // 3) Go back to where they came from
       navigate(from, { replace: true })
     } catch (err) {
       console.error(err)
+      // handle the error message without ever reloading
       const msg = err.response?.data?.message?.toLowerCase() || ''
       if (msg.includes('email not found')) {
         setError('That email is not registered.')
@@ -71,7 +73,8 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          {/* email & password inputs */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
@@ -81,7 +84,7 @@ export default function Login() {
               id="email"
               autoComplete="username"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm
                          focus:border-indigo-500 focus:ring-indigo-500 transition"
@@ -97,7 +100,7 @@ export default function Login() {
               id="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm
                          focus:border-indigo-500 focus:ring-indigo-500 transition"

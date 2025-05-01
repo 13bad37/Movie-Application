@@ -1,9 +1,16 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { useAuthStore } from '../store/authStore'
 
-function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" replace />;
+export default function ProtectedRoute({ children }) {
+  const user = useAuthStore(s => s.user)
+  const loc  = useLocation()
+
+  if (!user) {
+    toast.error('Please register or log in to view this content')
+    return <Navigate to="/register" state={{ from: loc }} replace />
+  }
+
+  return children
 }
-
-export default ProtectedRoute;

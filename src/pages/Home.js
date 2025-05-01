@@ -18,7 +18,6 @@ export default function Home() {
         Nonso Nkire’s Fabulous Movie Searching Website
       </h1>
 
-      {/* Show signed‑in email if present */}
       {user && (
         <p className="text-sm text-gray-600 mb-6">
           Signed in as <span className="font-medium">{user}</span>

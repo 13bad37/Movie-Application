@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+// src/pages/Movies.js
+import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Search,
@@ -15,79 +16,82 @@ export default function Movies() {
   const [loading, setLoading]         = useState(false)
   const [searchTitle, setSearchTitle] = useState('')
   const [searchYear, setSearchYear]   = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(() => {
+    const last = parseInt(sessionStorage.getItem('lastPage'), 10)
+    return !isNaN(last) && last > 0 ? last : 1
+  })
   const [totalPages, setTotalPages]   = useState(1)
   const [gotoPage, setGotoPage]       = useState('')
   const [showTopBtn, setShowTopBtn]   = useState(false)
-  const justRestoredRef               = useRef(false)
-  const PER_PAGE                      = 100
+  const restoredScrollRef = useRef(false)
 
-  // On mount restore last page
-  useEffect(() => {
-    const last = parseInt(sessionStorage.getItem('lastPage'), 10)
-    if (!isNaN(last) && last > 0) {
-      setCurrentPage(last)
-    }
-  }, [])
+  const PER_PAGE = 100
 
-  // The single fetch function
-  const fetchPage = useCallback(
-    async (page = 1) => {
-      try {
-        setLoading(true)
-        const yearParam = searchYear ? parseInt(searchYear, 10) : undefined
-        const { movies: list, total } = await searchMovies(
-          searchTitle,
-          yearParam,
-          page
-        )
+  // shared fetch logic
+  const fetchPage = async page => {
+    try {
+      setLoading(true)
+      const y = searchYear ? parseInt(searchYear, 10) : undefined
+      const { movies: list, total } = await searchMovies(
+        searchTitle,
+        y,
+        page
+      )
 
-        sessionStorage.setItem('moviesList', JSON.stringify(list))
-        sessionStorage.setItem('lastPage', page)
+      sessionStorage.setItem('moviesList', JSON.stringify(list))
+      sessionStorage.setItem('lastPage', page)
 
-        setMovies(list)
-        setTotalPages(Math.ceil(total / PER_PAGE))
+      setMovies(list)
+      setTotalPages(Math.ceil(total / PER_PAGE))
 
-        // once-only scroll restore
-        const lastScroll = parseInt(sessionStorage.getItem('lastScroll'), 10)
-        if (!isNaN(lastScroll) && !justRestoredRef.current) {
-          window.scrollTo({ top: lastScroll, behavior: 'auto' })
-          sessionStorage.removeItem('lastScroll')
-          justRestoredRef.current = true
-        }
-      } catch (err) {
-        console.error('Search error:', err)
-        setMovies([])
-        setTotalPages(1)
-      } finally {
-        setLoading(false)
+      // scroll restore once
+      const lastScroll = parseInt(sessionStorage.getItem('lastScroll'), 10)
+      if (!isNaN(lastScroll) && !restoredScrollRef.current) {
+        window.scrollTo({ top: lastScroll, behavior: 'auto' })
+        sessionStorage.removeItem('lastScroll')
+        restoredScrollRef.current = true
       }
-    },
-    [searchTitle, searchYear]
-  )
-
-  // Fetch when page changes
-  useEffect(() => {
-    fetchPage(currentPage)
-  }, [currentPage, fetchPage])
-
-  // Search form submit
-  const handleSearch = e => {
-    e.preventDefault()
-    justRestoredRef.current = false
-    if (currentPage === 1) {
-      fetchPage(1)
-    } else {
-      setCurrentPage(1)
+    } catch (err) {
+      console.error('Search error:', err)
+      toast.error('Failed to fetch movies')
+      setMovies([])
+      setTotalPages(1)
+    } finally {
+      setLoading(false)
     }
   }
 
-  // "Go to page" form
+  // effect for pagination or title-updates
+  useEffect(() => {
+    fetchPage(currentPage)
+  }, [currentPage, searchTitle])
+
+  // title input: live search + reset page
+  const onTitleChange = e => {
+    setSearchTitle(e.target.value)
+    restoredScrollRef.current = false
+    setCurrentPage(1)
+  }
+
+  // year input: just update state
+  const onYearChange = e => {
+    setSearchYear(e.target.value)
+  }
+
+  // form submit: always fetch page 1 (even if already there)
+  const handleSearch = e => {
+    e.preventDefault()
+    restoredScrollRef.current = false
+    setCurrentPage(1)
+    fetchPage(1)
+  }
+
+  // “go to” handler
   const handleGoto = e => {
     e.preventDefault()
     const p = parseInt(gotoPage, 10)
     if (!isNaN(p) && p >= 1 && p <= totalPages) {
-      justRestoredRef.current = false
+      restoredScrollRef.current = false
       setCurrentPage(p)
     } else {
       toast.error(`Enter a number between 1 and ${totalPages}`)
@@ -95,27 +99,26 @@ export default function Movies() {
     setGotoPage('')
   }
 
-  // Back to top button
+  // back-to-top visibility
   useEffect(() => {
-    const onScroll = () => {
+    const onScroll = () =>
       setShowTopBtn(
         window.scrollY + window.innerHeight >= document.body.scrollHeight - 200
       )
-    }
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-  const scrollToTop = () =>
-    window.scrollTo({ top: 0, behavior: 'smooth' })
 
-  // Save scroll before navigating to details
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+
+  // save scroll before navigating away
   const handleCardClick = () => {
     sessionStorage.setItem('lastScroll', window.scrollY)
   }
 
   return (
-    <div className="max-w-7xl mx-auto relative px-4">
-      {/* Search */}
+    <div className="max-w-7xl mx-auto px-4 relative">
+      {/* Search Form */}
       <form onSubmit={handleSearch} className="mb-8 animate-fadeInSlide">
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
@@ -125,7 +128,7 @@ export default function Movies() {
             <input
               type="text"
               value={searchTitle}
-              onChange={e => setSearchTitle(e.target.value)}
+              onChange={onTitleChange}
               placeholder="Search movies…"
               className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition"
             />
@@ -137,7 +140,7 @@ export default function Movies() {
             <input
               type="number"
               value={searchYear}
-              onChange={e => setSearchYear(e.target.value)}
+              onChange={onYearChange}
               placeholder="Year"
               min="1900"
               max={new Date().getFullYear()}
@@ -154,14 +157,14 @@ export default function Movies() {
         </div>
       </form>
 
-      {/* Movies Grid */}
+      {/* Movie Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {movies.map(m => (
           <Link
             key={m.imdbID}
             to={`/movies/${m.imdbID}`}
             onClick={handleCardClick}
-            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow animate-popIn"
+            className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow animate-popIn"
           >
             <MovieCard imdbID={m.imdbID} title={m.title} year={m.year} />
           </Link>
@@ -171,7 +174,7 @@ export default function Movies() {
       {/* Pagination */}
       <div className="flex flex-wrap justify-center items-center gap-4 my-8">
         <button
-          onClick={() => { justRestoredRef.current = false; setCurrentPage(1) }}
+          onClick={() => { setCurrentPage(1); restoredScrollRef.current = false }}
           disabled={currentPage === 1 || loading}
           className="p-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 transition"
           title="First page"
@@ -179,7 +182,7 @@ export default function Movies() {
           <ChevronsLeft className="h-5 w-5" />
         </button>
         <button
-          onClick={() => { justRestoredRef.current = false; setCurrentPage(p => Math.max(1, p - 1))}}
+          onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); restoredScrollRef.current = false }}
           disabled={currentPage === 1 || loading}
           className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 transition"
         >
@@ -206,14 +209,14 @@ export default function Movies() {
           </button>
         </form>
         <button
-          onClick={() => { justRestoredRef.current = false; setCurrentPage(p => Math.min(totalPages, p + 1))}}
+          onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); restoredScrollRef.current = false }}
           disabled={currentPage === totalPages || loading}
           className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 transition"
         >
           Next
         </button>
         <button
-          onClick={() => { justRestoredRef.current = false; setCurrentPage(totalPages) }}
+          onClick={() => { setCurrentPage(totalPages); restoredScrollRef.current = false }}
           disabled={currentPage === totalPages || loading}
           className="p-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 transition"
           title="Last page"
@@ -222,14 +225,14 @@ export default function Movies() {
         </button>
       </div>
 
-      {/* Loading */}
+      {/* Spinner */}
       {loading && (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
         </div>
       )}
 
-      {/* Back to Top */}
+      {/* Back to top */}
       {showTopBtn && (
         <button
           onClick={scrollToTop}

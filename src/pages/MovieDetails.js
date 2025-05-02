@@ -13,7 +13,7 @@ import ReactCountryFlag from 'react-country-flag';
 import { getMovieDetails } from '../services/api';
 import toast from 'react-hot-toast';
 
-// Map some country names to ISO alpha-2 codes for ReactCountryFlag
+// Some country names to ISO alpha-2 codes for ReactCountryFlag
 const countryMap = {
   'united states': 'US',
   'australia': 'AU',
@@ -55,7 +55,7 @@ function MovieDetails() {
     fetchMovie();
   }, [imdbID]);
 
-  // Retrieve the stored movies for next/prev navigation
+  // Retrieve stored movies for navigation
   const storedMovies = JSON.parse(sessionStorage.getItem('moviesList') || '[]');
   const currentIndex = storedMovies.findIndex((m) => m.imdbID === imdbID);
 
@@ -119,7 +119,7 @@ function MovieDetails() {
   return (
     <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden animate-fadeInSlide">
       <div className="md:flex">
-        {/* Poster Section */}
+        {/* Posters*/}
         <div className="md:w-1/3 flex justify-center items-center p-4">
           <img
             src={movie.poster || 'https://via.placeholder.com/500x750?text=No+Poster'}
@@ -128,12 +128,12 @@ function MovieDetails() {
           />
         </div>
 
-        {/* Info Section */}
+        {/* Info*/}
         <div className="md:w-2/3 p-8">
-          {/* Title */}
+          {/* Title*/}
           <h1 className="text-4xl font-bold text-gray-900 mb-2">{movie.title}</h1>
 
-          {/* Genre Tags */}
+          {/* Genres */}
           <div className="flex flex-wrap gap-2 mb-4">
             {movie.genres.map((genre) => (
               <span
@@ -145,7 +145,7 @@ function MovieDetails() {
             ))}
           </div>
 
-          {/* Info Row (runtime, year, countries, box office) */}
+          {/* Info Row*/}
           <div className="flex flex-wrap gap-8 items-center text-lg font-medium mb-6">
             {/* Runtime */}
             <div className="flex items-center gap-2">

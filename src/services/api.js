@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 // Base URL for all requests
 axios.defaults.baseURL = '/api'
 
-// === Request interceptor: auto-attach stored bearer token ===
+// Request interceptor
 axios.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
   if (token && !config.headers.Authorization) {
@@ -13,7 +13,7 @@ axios.interceptors.request.use(config => {
   return config
 })
 
-// === Response interceptor: on 401, try refresh (unless this is an auth call) ===
+//Response interceptor: on 401, try refresh (excludes auth call)
 let isRefreshing = false
 let failedQueue = []
 
@@ -30,7 +30,7 @@ axios.interceptors.response.use(
     const { config, response } = err
     const originalRequest = config
 
-    // if it's a 401 from login/register/refresh → just reject
+    // if it's a 401 from login/register/refresh - just reject
     if (
       response?.status === 401 &&
       /\/user\/(login|register|refresh)/.test(originalRequest.url)
@@ -38,7 +38,7 @@ axios.interceptors.response.use(
       return Promise.reject(err)
     }
 
-    // otherwise for other 401s, attempt token refresh once
+    // if not, for other 401s, attempt token refresh once
     if (
       response?.status === 401 &&
       !originalRequest._retry &&
@@ -94,7 +94,7 @@ axios.interceptors.response.use(
   }
 )
 
-// === API methods ===
+//API methods
 
 export const searchMovies = async (title, year, page) => {
   const params = { page }
@@ -136,7 +136,7 @@ export const logout = async () => {
 }
 
 /**
- * Manually set or clear the default Authorization header
+ * Manually set/clear default auth header
  */
 export const setAuthToken = token => {
   if (token) {

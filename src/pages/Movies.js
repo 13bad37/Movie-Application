@@ -1,4 +1,3 @@
-// src/pages/Movies.js
 import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -73,12 +72,11 @@ export default function Movies() {
     setCurrentPage(1)
   }
 
-  // year input: just update state
+  // year input: update state
   const onYearChange = e => {
     setSearchYear(e.target.value)
   }
 
-  // form submit: always fetch page 1 (even if already there)
   const handleSearch = e => {
     e.preventDefault()
     restoredScrollRef.current = false
@@ -111,7 +109,7 @@ export default function Movies() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
-  // save scroll before navigating away
+  // save scroll
   const handleCardClick = () => {
     sessionStorage.setItem('lastScroll', window.scrollY)
   }

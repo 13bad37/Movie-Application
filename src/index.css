@@ -1,14 +1,13 @@
-/* 1) Import Inter from Google Fonts */
+/* Import Inter from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-/* 2) Tailwind’s layers */
+/* Tailwind’s layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 3) Override base styles */
+/*Override base styles */
 @layer base {
-  /* make Inter your default */
   body {
     @apply font-sans;
     -webkit-font-smoothing: antialiased;
@@ -20,7 +19,7 @@
   }
 }
 
-/* 4) Your custom animations */
+/* Custom animations */
 @keyframes fadeInSlide {
   from {
     opacity: 0;

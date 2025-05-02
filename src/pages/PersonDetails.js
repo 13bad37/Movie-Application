@@ -11,7 +11,7 @@ export default function PersonDetails() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
 
-  // If not logged in, kick them to register
+  // If not logged in, redirect to register
   useEffect(() => {
     if (!user) {
       toast.error('Please register or log in to view person details');

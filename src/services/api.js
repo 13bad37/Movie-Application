@@ -2,7 +2,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 
 // Base URL for all requests
-axios.defaults.baseURL = '/api'
+axios.defaults.baseURL = 'http://4.237.58.241:3000'
 
 // Request interceptor
 axios.interceptors.request.use(config => {

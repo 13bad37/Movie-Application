@@ -1,11 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Search,
-  ChevronsLeft,
-  ChevronsRight,
-  ArrowUp
-} from 'lucide-react'
+import { Search, ChevronsLeft, ChevronsRight, ArrowUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { searchMovies } from '../services/api'
 import MovieCard from '../components/MovieCard'
@@ -13,8 +8,12 @@ import MovieCard from '../components/MovieCard'
 export default function Movies() {
   const [movies, setMovies]           = useState([])
   const [loading, setLoading]         = useState(false)
-  const [searchTitle, setSearchTitle] = useState('')
-  const [searchYear, setSearchYear]   = useState('')
+
+  // Controlled inputs
+  const [tempTitle, setTempTitle]     = useState('')
+  const [tempYear, setTempYear]       = useState('')
+  const [filters, setFilters]         = useState({ title: '', year: '' })
+
   const [currentPage, setCurrentPage] = useState(() => {
     const last = parseInt(sessionStorage.getItem('lastPage'), 10)
     return !isNaN(last) && last > 0 ? last : 1
@@ -22,69 +21,91 @@ export default function Movies() {
   const [totalPages, setTotalPages]   = useState(1)
   const [gotoPage, setGotoPage]       = useState('')
   const [showTopBtn, setShowTopBtn]   = useState(false)
-  const restoredScrollRef = useRef(false)
 
+  const cacheRef = useRef({})         // { "title|year|page": { list, pages } }
+  const abortRef = useRef(null)       // to cancel stale requests
+  const restoredScrollRef = useRef(false)
   const PER_PAGE = 100
 
-  // shared fetch logic
-  const fetchPage = async page => {
-    try {
-      setLoading(true)
-      const y = searchYear ? parseInt(searchYear, 10) : undefined
-      const { movies: list, total } = await searchMovies(
-        searchTitle,
-        y,
-        page
-      )
+  // Fetch function, wrapped in useCallback so we can cancel it
+  const fetchData = useCallback(async () => {
+    const { title, year } = filters
+    const page = currentPage
+    const key = `${title}|${year}|${page}`
 
-      sessionStorage.setItem('moviesList', JSON.stringify(list))
-      sessionStorage.setItem('lastPage', page)
-
+    // If the user has looked at this exact result, cache it then use it
+    if (cacheRef.current[key]) {
+      const { list, pages } = cacheRef.current[key]
       setMovies(list)
-      setTotalPages(Math.ceil(total / PER_PAGE))
+      setTotalPages(pages)
+    } else {
+      // Cancel any in-flight request
+      if (abortRef.current) abortRef.current.abort()
+      const ctrl = new AbortController()
+      abortRef.current = ctrl
 
-      // scroll restore once
-      const lastScroll = parseInt(sessionStorage.getItem('lastScroll'), 10)
-      if (!isNaN(lastScroll) && !restoredScrollRef.current) {
-        window.scrollTo({ top: lastScroll, behavior: 'auto' })
-        sessionStorage.removeItem('lastScroll')
-        restoredScrollRef.current = true
+      setLoading(true)
+      try {
+        const yearParam = year ? parseInt(year, 10) : undefined
+        const { movies: list, total } = await searchMovies(
+          title,
+          yearParam,
+          page,
+          { signal: ctrl.signal }
+        )
+
+        const pages = Math.ceil(total / PER_PAGE)
+        setMovies(list)
+        setTotalPages(pages)
+        cacheRef.current[key] = { list, pages }
+
+        sessionStorage.setItem('moviesList', JSON.stringify(list))
+        sessionStorage.setItem('lastPage', page)
+      } catch (err) {
+        if (err.name !== 'CanceledError') {
+          console.error(err)
+          toast.error('Failed to fetch movies')
+          setMovies([])
+          setTotalPages(1)
+        }
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      console.error('Search error:', err)
-      toast.error('Failed to fetch movies')
-      setMovies([])
-      setTotalPages(1)
-    } finally {
-      setLoading(false)
     }
-  }
 
-  // effect for pagination or title-updates
+    // Restore scroll once
+    const lastScroll = parseInt(sessionStorage.getItem('lastScroll'), 10)
+    if (!isNaN(lastScroll) && !restoredScrollRef.current) {
+      window.scrollTo({ top: lastScroll, behavior: 'auto' })
+      sessionStorage.removeItem('lastScroll')
+      restoredScrollRef.current = true
+    }
+  }, [filters, currentPage])
+
+  // Run fetchData whenever filters or page change
   useEffect(() => {
-    fetchPage(currentPage)
-  }, [currentPage, searchTitle])
+    fetchData()
+    return () => {
+      if (abortRef.current) abortRef.current.abort()
+    }
+  }, [fetchData])
 
-  // title input: live search + reset page
-  const onTitleChange = e => {
-    setSearchTitle(e.target.value)
-    restoredScrollRef.current = false
-    setCurrentPage(1)
-  }
+  // Clean up the scroll button listener
+  useEffect(() => {
+    const onScroll = () =>
+      setShowTopBtn(window.scrollY + window.innerHeight >= document.body.scrollHeight - 200)
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
-  // year input: update state
-  const onYearChange = e => {
-    setSearchYear(e.target.value)
-  }
-
+  // Handlers
   const handleSearch = e => {
     e.preventDefault()
     restoredScrollRef.current = false
+    setFilters({ title: tempTitle.trim(), year: tempYear.trim() })
     setCurrentPage(1)
-    fetchPage(1)
   }
 
-  // “go to” handler
   const handleGoto = e => {
     e.preventDefault()
     const p = parseInt(gotoPage, 10)
@@ -97,22 +118,8 @@ export default function Movies() {
     setGotoPage('')
   }
 
-  // back-to-top visibility
-  useEffect(() => {
-    const onScroll = () =>
-      setShowTopBtn(
-        window.scrollY + window.innerHeight >= document.body.scrollHeight - 200
-      )
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
-
-  // save scroll
-  const handleCardClick = () => {
-    sessionStorage.setItem('lastScroll', window.scrollY)
-  }
+  const handleCardClick = () => sessionStorage.setItem('lastScroll', window.scrollY)
 
   return (
     <div className="max-w-7xl mx-auto px-4 relative">
@@ -125,8 +132,8 @@ export default function Movies() {
             </label>
             <input
               type="text"
-              value={searchTitle}
-              onChange={onTitleChange}
+              value={tempTitle}
+              onChange={e => setTempTitle(e.target.value)}
               placeholder="Search movies…"
               className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition"
             />
@@ -137,8 +144,8 @@ export default function Movies() {
             </label>
             <input
               type="number"
-              value={searchYear}
-              onChange={onYearChange}
+              value={tempYear}
+              onChange={e => setTempYear(e.target.value)}
               placeholder="Year"
               min="1900"
               max={new Date().getFullYear()}
@@ -186,9 +193,7 @@ export default function Movies() {
         >
           Prev
         </button>
-        <span className="font-medium">
-          Page {currentPage} of {totalPages}
-        </span>
+        <span className="font-medium">Page {currentPage} of {totalPages}</span>
         <form onSubmit={handleGoto} className="flex items-center gap-2">
           <input
             type="number"
@@ -199,10 +204,7 @@ export default function Movies() {
             max={totalPages}
             className="w-20 px-2 py-1 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition"
           />
-          <button
-            type="submit"
-            className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-          >
+          <button type="submit" className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
             Go
           </button>
         </form>
@@ -223,14 +225,14 @@ export default function Movies() {
         </button>
       </div>
 
-      {/* Spinner */}
+      {/* Loading Spinner */}
       {loading && (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
         </div>
       )}
 
-      {/* Back to top */}
+      {/* Back to Top */}
       {showTopBtn && (
         <button
           onClick={scrollToTop}

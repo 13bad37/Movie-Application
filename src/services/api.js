@@ -135,9 +135,8 @@ export const logout = async () => {
   return axios.post('/user/logout')
 }
 
-/**
- * Manually set/clear default auth header
- */
+
+ // Manually set/clear default auth header
 export const setAuthToken = token => {
   if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`

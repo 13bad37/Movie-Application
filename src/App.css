@@ -191,7 +191,7 @@ a:hover {
   animation: fadeIn 0.8s forwards;
 }
 
-/* Responsive Design */
+
 @media (min-width: 768px) {
   form {
     width: 50%;

@@ -1,15 +1,14 @@
 module.exports = {
-  // Paths to all template files
   content: ["./src/**/*.{js,jsx}"],
 
   theme: {
     extend: {
-      // 1) Set Inter as the default sans‑serif
+      //Set Inter as the default 
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
 
-      // 2) Your custom keyframes
+      //Custom keyframes
       keyframes: {
         fadeIn: {
           "0%": { opacity: "0" },
@@ -21,7 +20,7 @@ module.exports = {
         },
       },
 
-      // 3) ustom animation utilities
+      //Custom animation utilities
       animation: {
         fadeIn:  "fadeIn 0.8s ease-out forwards",
         slideUp: "slideUp 0.8s ease-out forwards",

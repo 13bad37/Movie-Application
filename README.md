@@ -43,7 +43,16 @@
 
 ## 📦 Installation
 
-1. **Clone** this repo  
+1. **Clone** this repo
    ```bash
    git clone https://github.com/13bad37/movie-explorer.git
-   cd
+   cd movie-explorer
+   ```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+3. **Start the development server**
+   ```bash
+   npm start
+   ```

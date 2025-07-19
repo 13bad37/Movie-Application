@@ -24,7 +24,7 @@ const RatingChart = ({ roles = [] }) => {
     labels,
     datasets: [
       {
-        label: 'IMDB Rating',
+        label: 'IMDb Rating',
         data: dataValues,
         backgroundColor: 'rgba(99, 102, 241, 0.5)',
         borderColor: 'rgb(99, 102, 241)',

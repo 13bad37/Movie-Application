@@ -96,12 +96,12 @@ axios.interceptors.response.use(
 
 //API methods
 
-export const searchMovies = async (title, year, page) => {
+export const searchMovies = async (title, year, page, config = {}) => {
   const params = { page }
   if (title) params.title = title
   if (typeof year === 'number' && !isNaN(year)) params.year = year
 
-  const resp = await axios.get('/movies/search', { params })
+  const resp = await axios.get('/movies/search', { ...config, params })
   return {
     movies: resp.data.data,
     total: resp.data.pagination.total,

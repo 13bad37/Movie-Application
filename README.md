@@ -1,6 +1,14 @@
 # Movie Explorer
 
 Movie Explorer is a React application designed for discovering and exploring movies through an intuitive and responsive interface. Users can search for movies, browse results, and access detailed information about cast, crew, ratings, and more.
+---
+## Language and Tools
+
+![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+![Axios](https://img.shields.io/badge/Axios-5A29E4?style=flat-square&logo=axios&logoColor=white)
+![Zustand](https://img.shields.io/badge/Zustand-FFDD00?style=flat-square&logo=zustand&logoColor=black)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
 
 ---
 
@@ -61,12 +69,3 @@ Movie Explorer is a React application designed for discovering and exploring mov
    npm start
    ```
 
----
-
-## Language and Tools
-
-![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
-![Axios](https://img.shields.io/badge/Axios-5A29E4?style=flat-square&logo=axios&logoColor=white)
-![Zustand](https://img.shields.io/badge/Zustand-FFDD00?style=flat-square&logo=zustand&logoColor=black)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)

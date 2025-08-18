@@ -1,7 +1,7 @@
 # Movie Explorer
 
 Movie Explorer is a React application designed for discovering and exploring movies through an intuitive and responsive interface. Users can search for movies, browse results, and access detailed information about cast, crew, ratings, and more.
----
+
 ## Language and Tools
 
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=white)
@@ -10,7 +10,7 @@ Movie Explorer is a React application designed for discovering and exploring mov
 ![Zustand](https://img.shields.io/badge/Zustand-FFDD00?style=flat-square&logo=zustand&logoColor=black)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
 
----
+
 
 ## Features
 
